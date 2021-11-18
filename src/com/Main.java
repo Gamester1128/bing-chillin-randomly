@@ -15,38 +15,60 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 public class Main {
+	
+	// path to config file 
+	private static final String configPath = "config.json";
 
 	public static void main(String[] args) {
-		JSONObject obj = null;
+		JSONObject json = null;
 		try {
-			obj = (JSONObject) new JSONParser().parse(readFile("config.json"));
+			// get json file at config path
+			json = (JSONObject) new JSONParser().parse(readFile(configPath));
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 
+		// All the configuration from json file
+		String cfg_url = (String) json.get("path");
+		char cfg_unit = ((String) json.get("unit")).charAt(0);
+		int cfg_time = (int) (long) json.get("time");
+
+		// Initialise
 		Random rand = new Random();
-		String url = (String) obj.get("path");
-		char unit = ((String) obj.get("unit")).charAt(0);
-		while (true) {
-			try {
-				long time = (long) obj.get("time");
-				switch (unit) {
-				case 'm':
-					time *= 60;
-				case 's':
-					time *= 1000;
-				}
-				int randTime = rand.nextInt((int) time);
-				System.out.println(randTime);
-				Thread.sleep(randTime);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		boolean running = true;
+		int i = 1;
+		while (running) {
+
+			// get multiplier for how many milllis to sleep based on cfg_unit
+			int mulitiplier = 1;
+			switch (cfg_unit) {
+			case 'm':
+				mulitiplier *= 60;
+			case 's':
+				mulitiplier *= 1000;
 			}
-			System.out.println("Playing Sound");
-			playSound(url);
+			// stores the upper bound for random
+			int randTime = (int) cfg_time * mulitiplier;
+			System.out.println("Lower Bound for Random: 0ms");
+			System.out.println("Upper Bound for Random: " + (randTime - 1) + "ms");
+
+			sleep(rand.nextInt(randTime));
+
+			System.out.println("#" + i + " : Playing Sound!");
+			playSound(cfg_url);
 		}
 	}
 
+	// puts main thread to sleep
+	public static void sleep(int millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	// Return string storing everything from file at url
 	public static String readFile(String url) {
 		String total = "";
 		String newLine;
@@ -63,6 +85,9 @@ public class Main {
 		return total;
 	}
 
+	// Used to play .wav soundtrack found at url, yoinked it form
+	// https://stackoverflow.com/questions/6045384/playing-mp3-and-wav-in-java
+	// and modified to take path
 	public static void playSound(String url) {
 		try {
 			File file = new File(url);
