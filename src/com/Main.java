@@ -4,13 +4,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Random;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.sound.sampled.FloatControl;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -19,7 +17,6 @@ import org.json.simple.parser.ParseException;
 public class Main {
 
 	public static void main(String[] args) {
-
 		JSONObject obj = null;
 		try {
 			obj = (JSONObject) new JSONParser().parse(readFile("config.json"));
@@ -29,10 +26,17 @@ public class Main {
 
 		Random rand = new Random();
 		String url = (String) obj.get("path");
+		char unit = ((String) obj.get("unit")).charAt(0);
 		while (true) {
-			long time = (long) obj.get("time");
 			try {
-				int randTime = rand.nextInt((int)time * 1000 * 60);
+				long time = (long) obj.get("time");
+				switch (unit) {
+				case 'm':
+					time *= 60;
+				case 's':
+					time *= 1000;
+				}
+				int randTime = rand.nextInt((int) time);
 				System.out.println(randTime);
 				Thread.sleep(randTime);
 			} catch (InterruptedException e) {
@@ -69,14 +73,6 @@ public class Main {
 		} catch (Exception ex) {
 			System.out.println("Error with playing sound.");
 			ex.printStackTrace();
-		}
-	}
-
-	public static void setVolume(Clip clip, int level) {
-		Objects.requireNonNull(clip);
-		FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.VOLUME);
-		if (volume != null) {
-			volume.setValue((float) (level / 100.0));
 		}
 	}
 
